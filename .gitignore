@@ -1,0 +1,48 @@
+# MATLAB
+*.asv
+*.m~
+*.mex*
+*.mat
+*.slx.autosave
+
+# Data files (large STL files, outputs)
+data/input/female/*.stl
+data/input/male/*.stl
+data/input/clinical_cases/*.stl
+data/output/**/*.stl
+data/output/**/*.mat
+data/output/**/*.csv
+data/output/**/*.png
+data/output/**/*.jpg
+data/output/**/*.fig
+data/output/**/*.txt
+
+# Keep directory structure
+!data/input/female/.gitkeep
+!data/input/male/.gitkeep
+!data/input/clinical_cases/.gitkeep
+!data/output/**/.gitkeep
+
+# Logs
+*.log
+data/output/logs/*.txt
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.bak
+~$*
+
+# Compiled MEX files
+*.mexa64
+*.mexw64
+*.mexmaci64
