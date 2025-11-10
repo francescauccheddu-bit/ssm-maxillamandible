@@ -191,14 +191,15 @@ function results = phase_preprocessing(config, ~)
         meshes{i} = normalize_mesh(meshes{i}, config);
     end
 
-    % Remesh (optional, simplified version)
+    % Remesh (optional)
     if config.preprocessing.remesh_enabled
-        logger('Remeshing meshes (simplified)...');
-        % Note: Full remeshing requires external libraries
-        % This is a placeholder for the remeshing step
+        logger('Remeshing meshes...');
         for i = 1:length(meshes)
-            % In production, call: meshes{i} = remesh_isotropic(meshes{i}, config);
-            % For now, skip remeshing
+            progress_bar(i, length(meshes), 'message', 'Remeshing');
+            [meshes{i}.vertices, meshes{i}.faces, ~] = remesh_uniform(...
+                meshes{i}.vertices, meshes{i}.faces, ...
+                config.preprocessing.edge_length, ...
+                config.preprocessing.remesh_iterations);
         end
     end
 
@@ -213,16 +214,43 @@ function results = phase_registration(config, prev_results)
 
     meshes = prev_results.meshes;
 
-    % Step 1: Rigid ICP alignment to first mesh (template)
-    logger('Rigid ICP alignment...');
-    template = meshes{1}.vertices;
+    % Select template (use first mesh or compute mean)
+    template_vertices = meshes{1}.vertices;
+    template_faces = meshes{1}.faces;
 
-    for i = 2:length(meshes)
-        [meshes{i}.vertices, ~] = rigid_icp(meshes{i}.vertices, template, config);
+    logger('Phase 2a: Rigid ICP alignment to template...');
+    for i = 1:length(meshes)
+        if i == 1
+            continue;  % Template doesn't need alignment
+        end
+
+        progress_bar(i, length(meshes), 'message', 'Rigid ICP');
+
+        rigid_opts.use_prealignment = true;
+        rigid_opts.max_iterations = config.registration.rigid_icp.iterations;
+
+        [meshes{i}.vertices, ~] = rigid_icp_full(...
+            meshes{i}.vertices, template_vertices, rigid_opts);
     end
 
-    % Step 2: Generalized Procrustes Analysis
-    logger('Generalized Procrustes Analysis...');
+    % Optional: Non-rigid ICP for fine alignment (computationally expensive)
+    if isfield(config.registration, 'use_nonrigid') && config.registration.use_nonrigid
+        logger('Phase 2b: Non-rigid ICP alignment...');
+        for i = 2:length(meshes)
+            progress_bar(i, length(meshes), 'message', 'Non-rigid ICP');
+
+            nonrigid_opts.iterations = config.registration.nonrigid_icp.iterations;
+            nonrigid_opts.lambda = config.registration.nonrigid_icp.lambda;
+            nonrigid_opts.use_rigid_prealign = false;  % Already aligned
+
+            [meshes{i}.vertices, ~] = nonrigid_icp_rbf(...
+                meshes{i}.vertices, meshes{i}.faces, ...
+                template_vertices, template_faces, nonrigid_opts);
+        end
+    end
+
+    % Step 3: Generalized Procrustes Analysis for final alignment
+    logger('Phase 2c: Generalized Procrustes Analysis...');
     meshes = procrustes_align(meshes, config);
 
     results = prev_results;
@@ -234,7 +262,8 @@ function results = phase_ssm_building(config, prev_results)
     % Phase 3: Build SSM
     logger('Building Statistical Shape Model...', 'level', 'INFO');
 
-    ssm_model = build_ssm(prev_results.aligned_meshes, prev_results.metadata, config);
+    % Use complete SSM builder with shape normalization
+    ssm_model = build_ssm_complete(prev_results.aligned_meshes, prev_results.metadata, config);
 
     % Save model
     save(config.paths.output.ssm_model, 'ssm_model', '-v7.3');
