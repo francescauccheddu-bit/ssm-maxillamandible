@@ -42,6 +42,7 @@ function config = pipeline_config()
 
     %% Registration
     config.registration.reference_index = 1;
+    config.registration.template_index = [];  % Auto-select (set to number to use specific template)
     config.registration.use_nonrigid = true;  % Enabled per paper
     config.registration.num_iterations = 3;  % 3 iterations per paper
 

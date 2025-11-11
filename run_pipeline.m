@@ -65,6 +65,9 @@ function run_pipeline(varargin)
     logger(sprintf('Started: %s', datestr(now)), 'level', 'INFO');
     fprintf('Log file: %s\n\n', log_file);
 
+    % Start global timer
+    pipeline_start_time = tic;
+
     %% Display Configuration
     display_config(config);
 
@@ -97,6 +100,9 @@ function run_pipeline(varargin)
         fprintf('PHASE %d: %s\n', i, upper(phase_name));
         fprintf('========================================\n');
 
+        % Start phase timer
+        phase_start_time = tic;
+
         try
             % Check checkpoint
             if config.checkpoint.enabled && ~config.execution.force_recompute
@@ -111,12 +117,11 @@ function run_pipeline(varargin)
             end
 
             % Execute phase
-            tic;
             phase_results = phase_func(config, results);
-            elapsed = toc;
+            phase_elapsed = toc(phase_start_time);
 
             logger(sprintf('Phase %d completed in %.1f seconds (%.1f min)', ...
-                i, elapsed, elapsed/60), 'level', 'INFO');
+                i, phase_elapsed, phase_elapsed/60), 'level', 'INFO');
 
             % Merge results
             results = merge_structs(results, phase_results);
@@ -166,7 +171,11 @@ function run_pipeline(varargin)
         fprintf('Pipeline terminated due to error\n');
     end
 
+    % Total pipeline time
+    total_elapsed = toc(pipeline_start_time);
     fprintf('\nFinished: %s\n', datestr(now));
+    fprintf('Total time: %.1f seconds (%.1f min, %.2f hours)\n', ...
+        total_elapsed, total_elapsed/60, total_elapsed/3600);
     fprintf('========================================\n\n');
 
     %% Cleanup
@@ -225,11 +234,18 @@ function results = phase_registration(config, prev_results)
 
     meshes = prev_results.meshes;
 
-    % Intelligent template selection (per paper section 2.4)
-    % Find specimen closest to preliminary mean shape
-    logger('Selecting optimal template (closest to preliminary mean)...');
-    template_idx = select_template_closest_to_mean(meshes);
-    logger(sprintf('Selected specimen %d as template', template_idx), 'level', 'DEBUG');
+    % Template selection (per paper section 2.4)
+    if isfield(config.registration, 'template_index') && ~isempty(config.registration.template_index)
+        % Use specified template
+        template_idx = config.registration.template_index;
+        logger(sprintf('Using specified template: specimen %d', template_idx), 'level', 'INFO');
+    else
+        % Auto-select: find specimen closest to preliminary mean shape
+        logger('Selecting optimal template (closest to preliminary mean)...');
+        template_idx = select_template_closest_to_mean(meshes);
+        logger(sprintf('Auto-selected specimen %d as template', template_idx), 'level', 'INFO');
+        logger(sprintf('TIP: To skip template search next time, set config.registration.template_index = %d', template_idx), 'level', 'INFO');
+    end
 
     % Iterative registration (3 iterations per paper)
     num_iterations = 3;
