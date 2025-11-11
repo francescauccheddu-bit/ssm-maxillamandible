@@ -13,11 +13,17 @@ function logger(message, varargin)
 % Example:
 %   logger('Processing started', 'level', 'INFO');
 
+    % Convert message to string if needed
+    if isnumeric(message)
+        message = num2str(message);
+    elseif ~ischar(message) && ~isstring(message)
+        message = char(message);
+    end
+
     % Parse inputs
     p = inputParser;
-    addRequired(p, 'message', @ischar);
-    addParameter(p, 'level', 'INFO', @ischar);
-    parse(p, message, varargin{:});
+    addParameter(p, 'level', 'INFO');
+    parse(p, varargin{:});
 
     level = upper(p.Results.level);
 
