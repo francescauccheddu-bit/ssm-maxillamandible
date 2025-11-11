@@ -4,11 +4,11 @@ function config = pipeline_config()
 % Returns configuration struct with all pipeline parameters
 
     %% Paths
-    config.paths.training_female = 'data/input/female';
+    config.paths.training_female = 'data/training/female';
     config.paths.training_male = '';  % No male data
 
     % Input paths (for compatibility)
-    config.paths.input.female = 'data/input/female';
+    config.paths.input.female = 'data/training/female';
     config.paths.input.male = '';
     config.paths.input.clinical = '';  % No clinical cases
 
