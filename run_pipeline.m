@@ -296,16 +296,8 @@ function results = phase_registration(config, prev_results)
 
         % Update template to mean shape for next iteration
         if iter < num_iterations
-            logger(sprintf('  Updating template to mean shape...', iter), 'level', 'DEBUG');
-            % Compute mean shape (centered)
-            mean_vertices = zeros(size(meshes{1}.vertices));
-            for i = 1:length(meshes)
-                centroid = mean(meshes{i}.vertices, 1);
-                mean_vertices = mean_vertices + (meshes{i}.vertices - centroid);
-            end
-            mean_vertices = mean_vertices / length(meshes);
-
-            % Find closest mesh to new mean
+            logger(sprintf('  Updating template for next iteration...', iter), 'level', 'DEBUG');
+            % Find specimen closest to preliminary mean
             template_idx = select_template_closest_to_mean(meshes);
         end
     end
