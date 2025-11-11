@@ -19,9 +19,9 @@ fprintf('Tempo stimato: 40-50 minuti\n\n');
 % Esegui la pipeline
 try
     run_pipeline('config', config);
-    fprintf('\n✓ Pipeline completata con successo!\n');
+    fprintf('\n[OK] Pipeline completata con successo!\n');
 catch ME
-    fprintf('\n✗ Errore durante l'esecuzione:\n');
+    fprintf('\n[ERROR] Errore durante l''esecuzione:\n');
     fprintf('  %s\n', ME.message);
     rethrow(ME);
 end
