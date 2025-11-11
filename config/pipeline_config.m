@@ -33,11 +33,11 @@ function config = pipeline_config()
     config.checkpoint.phases = {'preprocessing', 'registration', 'ssm_building', 'analysis', 'reconstruction'};
 
     %% Preprocessing
-    config.preprocessing.enable_remeshing = false;  % DISABLED: remeshing ineffective on fine meshes
-    config.preprocessing.remesh_enabled = false;    % Original meshes already high quality (0.41mm edges)
-    config.preprocessing.target_edge_length = [];   % Not used
-    config.preprocessing.edge_length = 1.2;         % Adjusted for decimated models
-    config.preprocessing.remesh_iterations = 3;     % Not used
+    config.preprocessing.enable_remeshing = true;   % ENABLED per paper methodology
+    config.preprocessing.remesh_enabled = true;     % Required to have same vertex count across all meshes
+    config.preprocessing.target_edge_length = 1.5;  % 1.5mm per paper (originally used 1.5mm for 200 samples)
+    config.preprocessing.edge_length = 1.5;         % Paper uses 1.5mm for uniform distribution
+    config.preprocessing.remesh_iterations = 3;     % Paper uses iterative remeshing
     config.preprocessing.clean_mesh = true;         % Keep cleaning enabled
 
     %% Registration
