@@ -20,6 +20,11 @@ function run_pipeline(varargin)
 %   4. Analysis - Statistical sex difference testing
 %   5. Reconstruction - Clinical case reconstruction
 
+    %% Add Paths (must be done BEFORE loading config)
+    [pipeline_dir, ~, ~] = fileparts(mfilename('fullpath'));
+    addpath(genpath(fullfile(pipeline_dir, 'src')));
+    addpath(fullfile(pipeline_dir, 'config'));
+
     %% Parse Input
     p = inputParser;
     addParameter(p, 'config', [], @(x) isempty(x) || isstruct(x));
@@ -45,11 +50,6 @@ function run_pipeline(varargin)
     if ~isempty(p.Results.only)
         config.execution.run_only_phase = p.Results.only;
     end
-
-    %% Add Paths
-    [pipeline_dir, ~, ~] = fileparts(mfilename('fullpath'));
-    addpath(genpath(fullfile(pipeline_dir, 'src')));
-    addpath(fullfile(pipeline_dir, 'config'));
 
     %% Initialize Logging
     if config.logging.enabled
