@@ -34,8 +34,8 @@ function test_edge_length()
 
     % Load original mesh
     fprintf('Loading original mesh...\n');
-    [V_orig, F_orig] = read_stl(test_file);
-    [V_orig, F_orig] = clean_mesh(V_orig, F_orig);
+    mesh_orig = read_stl(test_file);
+    [V_orig, F_orig] = clean_mesh(mesh_orig.vertices, mesh_orig.faces);
 
     % Original statistics
     edges_orig = [F_orig(:,[1,2]); F_orig(:,[2,3]); F_orig(:,[3,1])];
