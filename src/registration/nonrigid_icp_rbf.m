@@ -92,16 +92,17 @@ function [vertices_registered, registration_info] = nonrigid_icp_rbf(vertices_so
 
         % Nearest neighbor search
         [idx_st, ~] = knnsearch(vertices_target(valid_target_idx,:), V_current(valid_source_idx,:));
-        idx_st = valid_target_idx(idx_st);
+        % idx_st are local indices into valid_target_idx (1 to length(valid_target_idx))
 
         [idx_ts, ~] = knnsearch(V_current(valid_source_idx,:), vertices_target(valid_target_idx,:));
-        idx_ts = valid_source_idx(idx_ts);
+        % idx_ts are local indices into valid_source_idx (1 to length(valid_source_idx))
 
         % Build correspondence sets
         source_partial = V_current(valid_source_idx, :);
         target_partial = vertices_target(valid_target_idx, :);
 
         % Symmetric correspondences
+        % idx_st and idx_ts are already local indices, so can be used directly
         source_extended = [source_partial; source_partial(idx_ts, :)];
         target_extended = [target_partial(idx_st, :); target_partial];
 
