@@ -36,7 +36,7 @@ function config = pipeline_config()
     config.preprocessing.enable_remeshing = false;  % DISABLED: remeshing ineffective on fine meshes
     config.preprocessing.remesh_enabled = false;    % Original meshes already high quality (0.41mm edges)
     config.preprocessing.target_edge_length = [];   % Not used
-    config.preprocessing.edge_length = 1.5;         % Not used
+    config.preprocessing.edge_length = 1.2;         % Not used
     config.preprocessing.remesh_iterations = 3;     % Not used
     config.preprocessing.clean_mesh = true;         % Keep cleaning enabled
 
