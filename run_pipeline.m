@@ -185,6 +185,16 @@ function results = phase_preprocessing(config, ~)
     % Load STL files
     [meshes, metadata] = load_training_data(config);
 
+    % Store original scales BEFORE normalization (for rescaling after registration)
+    logger('Computing original scales...');
+    original_scales = zeros(length(meshes), 1);
+    for i = 1:length(meshes)
+        % Compute RMS distance from centroid as scale measure
+        centroid = mean(meshes{i}.vertices, 1);
+        distances = sqrt(sum((meshes{i}.vertices - centroid).^2, 2));
+        original_scales(i) = sqrt(mean(distances.^2));
+    end
+
     % Normalize meshes
     logger('Normalizing meshes...');
     for i = 1:length(meshes)
@@ -205,6 +215,7 @@ function results = phase_preprocessing(config, ~)
 
     results.meshes = meshes;
     results.metadata = metadata;
+    results.original_scales = original_scales;  % Store for later rescaling
 
 end
 
@@ -214,43 +225,99 @@ function results = phase_registration(config, prev_results)
 
     meshes = prev_results.meshes;
 
-    % Select template (use first mesh or compute mean)
-    template_vertices = meshes{1}.vertices;
-    template_faces = meshes{1}.faces;
+    % Intelligent template selection (per paper section 2.4)
+    % Find specimen closest to preliminary mean shape
+    logger('Selecting optimal template (closest to preliminary mean)...');
+    template_idx = select_template_closest_to_mean(meshes);
+    logger(sprintf('Selected specimen %d as template', template_idx), 'level', 'DEBUG');
 
-    logger('Phase 2a: Rigid ICP alignment to template...');
-    for i = 1:length(meshes)
-        if i == 1
-            continue;  % Template doesn't need alignment
-        end
-
-        progress_bar(i, length(meshes), 'message', 'Rigid ICP');
-
-        rigid_opts.use_prealignment = true;
-        rigid_opts.max_iterations = config.registration.rigid_icp.iterations;
-
-        [meshes{i}.vertices, ~] = rigid_icp_full(...
-            meshes{i}.vertices, template_vertices, rigid_opts);
+    % Iterative registration (3 iterations per paper)
+    num_iterations = 3;
+    if isfield(config.registration, 'num_iterations')
+        num_iterations = config.registration.num_iterations;
     end
 
-    % Optional: Non-rigid ICP for fine alignment (computationally expensive)
-    if isfield(config.registration, 'use_nonrigid') && config.registration.use_nonrigid
-        logger('Phase 2b: Non-rigid ICP alignment...');
-        for i = 2:length(meshes)
-            progress_bar(i, length(meshes), 'message', 'Non-rigid ICP');
+    for iter = 1:num_iterations
+        logger(sprintf('Phase 2 - Iteration %d/%d:', iter, num_iterations));
 
+        % Current template
+        template_vertices = meshes{template_idx}.vertices;
+        template_faces = meshes{template_idx}.faces;
+
+        % 2a: Rigid ICP (affine registration)
+        logger(sprintf('  Rigid ICP alignment (iteration %d)...', iter));
+        rigid_opts.use_prealignment = (iter == 1);  % Only first iteration
+        rigid_opts.max_iterations = config.registration.rigid_icp.iterations;
+
+        for i = 1:length(meshes)
+            if i == template_idx
+                continue;  % Template doesn't need alignment
+            end
+            progress_bar(i, length(meshes), 'message', sprintf('Rigid ICP iter %d', iter));
+
+            [meshes{i}.vertices, ~] = rigid_icp_full(...
+                meshes{i}.vertices, template_vertices, rigid_opts);
+        end
+
+        % 2b: Non-rigid ICP
+        if config.registration.use_nonrigid
+            logger(sprintf('  Non-rigid ICP alignment (iteration %d)...', iter));
             nonrigid_opts.iterations = config.registration.nonrigid_icp.iterations;
             nonrigid_opts.lambda = config.registration.nonrigid_icp.lambda;
             nonrigid_opts.use_rigid_prealign = false;  % Already aligned
 
-            [meshes{i}.vertices, ~] = nonrigid_icp_rbf(...
-                meshes{i}.vertices, meshes{i}.faces, ...
-                template_vertices, template_faces, nonrigid_opts);
+            for i = 1:length(meshes)
+                if i == template_idx
+                    continue;
+                end
+                progress_bar(i, length(meshes), 'message', sprintf('Non-rigid ICP iter %d', iter));
+
+                [meshes{i}.vertices, ~] = nonrigid_icp_rbf(...
+                    meshes{i}.vertices, meshes{i}.faces, ...
+                    template_vertices, template_faces, nonrigid_opts);
+            end
+        end
+
+        % Update template to mean shape for next iteration
+        if iter < num_iterations
+            logger(sprintf('  Updating template to mean shape...', iter), 'level', 'DEBUG');
+            % Compute mean shape (centered)
+            mean_vertices = zeros(size(meshes{1}.vertices));
+            for i = 1:length(meshes)
+                centroid = mean(meshes{i}.vertices, 1);
+                mean_vertices = mean_vertices + (meshes{i}.vertices - centroid);
+            end
+            mean_vertices = mean_vertices / length(meshes);
+
+            % Find closest mesh to new mean
+            template_idx = select_template_closest_to_mean(meshes);
         end
     end
 
+    % Rescale to original size (per paper section 2.4)
+    % After affine+nonrigid registration, restore anatomical scale
+    if isfield(prev_results, 'original_scales')
+        logger('Phase 2c: Rescaling to original anatomical size...');
+        original_scales = prev_results.original_scales;
+
+        for i = 1:length(meshes)
+            % Compute current scale
+            centroid = mean(meshes{i}.vertices, 1);
+            distances = sqrt(sum((meshes{i}.vertices - centroid).^2, 2));
+            current_scale = sqrt(mean(distances.^2));
+
+            % Rescale to original
+            if current_scale > 0
+                scale_factor = original_scales(i) / current_scale;
+                meshes{i}.vertices = (meshes{i}.vertices - centroid) * scale_factor + centroid;
+            end
+        end
+
+        logger(sprintf('Rescaled %d meshes to original anatomical size', length(meshes)), 'level', 'DEBUG');
+    end
+
     % Step 3: Generalized Procrustes Analysis for final alignment
-    logger('Phase 2c: Generalized Procrustes Analysis...');
+    logger('Phase 2d: Generalized Procrustes Analysis...');
     meshes = procrustes_align(meshes, config);
 
     results = prev_results;

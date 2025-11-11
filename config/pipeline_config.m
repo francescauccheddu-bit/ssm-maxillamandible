@@ -36,24 +36,25 @@ function config = pipeline_config()
     config.preprocessing.enable_remeshing = true;
     config.preprocessing.remesh_enabled = true;
     config.preprocessing.target_edge_length = [];  % Auto-calculate
-    config.preprocessing.edge_length = 2.0;  % Default 2mm
+    config.preprocessing.edge_length = 1.5;  % 1.5mm per paper specification
     config.preprocessing.remesh_iterations = 3;
     config.preprocessing.clean_mesh = true;
 
     %% Registration
     config.registration.reference_index = 1;
-    config.registration.use_nonrigid = false;  % Disabled for speed
+    config.registration.use_nonrigid = true;  % Enabled per paper
+    config.registration.num_iterations = 3;  % 3 iterations per paper
 
-    % Rigid ICP
+    % Rigid ICP (affine registration)
     config.registration.rigid_icp.max_iterations = 100;
     config.registration.rigid_icp.iterations = 100;
     config.registration.rigid_icp.tolerance = 1e-6;
 
     % Non-rigid ICP
     config.registration.nonrigid_icp.max_iterations = 50;
-    config.registration.nonrigid_icp.iterations = 50;
+    config.registration.nonrigid_icp.iterations = 15;  % Reduced per paper
     config.registration.nonrigid_icp.tolerance = 1e-4;
-    config.registration.nonrigid_icp.lambda = 0.1;
+    config.registration.nonrigid_icp.lambda = 0.001;  % Regularization
 
     %% SSM
     config.ssm.max_components = 19;  % Max for 20 samples = n-1
