@@ -288,9 +288,14 @@ function results = phase_registration(config, prev_results)
                 end
                 progress_bar(i, length(meshes), 'message', sprintf('Non-rigid ICP iter %d', iter));
 
+                % Deform template to match mesh (not mesh to template)
+                % This ensures all meshes have the same topology (same vertex count)
                 [meshes{i}.vertices, ~] = nonrigid_icp_rbf(...
-                    meshes{i}.vertices, meshes{i}.faces, ...
-                    template_vertices, template_faces, nonrigid_opts);
+                    template_vertices, template_faces, ...
+                    meshes{i}.vertices, meshes{i}.faces, nonrigid_opts);
+
+                % Update faces to match template topology
+                meshes{i}.faces = template_faces;
             end
         end
 
