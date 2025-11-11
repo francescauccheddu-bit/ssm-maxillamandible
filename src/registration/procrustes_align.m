@@ -1,100 +1,75 @@
-function aligned_meshes = procrustes_align(meshes, config)
-% PROCRUSTES_ALIGN Generalized Procrustes Analysis
+function meshes = procrustes_align(meshes, config)
+% PROCRUSTES_ALIGN Generalized Procrustes Analysis for mesh alignment
 %
-% Usage:
-%   meshes_aligned = procrustes_align(meshes, config)
+% Performs iterative alignment to minimize total distance between all meshes
 %
-% Parameters:
-%   meshes - Cell array of mesh structs with .vertices (Nx3)
-%   config - Configuration with .registration.procrustes settings
+% Syntax:
+%   meshes = procrustes_align(meshes, config)
 %
-% Returns:
-%   aligned_meshes - Cell array of aligned mesh structs
+% Inputs:
+%   meshes - Cell array of mesh structs
+%   config - Configuration struct
 %
-% Algorithm:
-%   Iteratively align all shapes to their mean until convergence
-
-    max_iter = config.registration.procrustes.max_iterations;
-    tolerance = config.registration.procrustes.tolerance;
-    allow_scaling = config.registration.procrustes.allow_scaling;
+% Outputs:
+%   meshes - Aligned mesh structs
+%
+% Example:
+%   meshes = procrustes_align(meshes, config);
 
     num_meshes = length(meshes);
     num_vertices = size(meshes{1}.vertices, 1);
 
-    logger('Performing Generalized Procrustes Analysis...');
+    % Stack all vertices
+    X = zeros(num_vertices, 3, num_meshes);
+    for i = 1:num_meshes
+        X(:, :, i) = meshes{i}.vertices;
+    end
 
-    % Initialize: use first mesh as reference
-    mean_shape = meshes{1}.vertices;
+    % Iterative Procrustes alignment
+    max_iterations = 10;
+    tolerance = 1e-6;
 
-    for iter = 1:max_iter
-        % Align all meshes to current mean
-        aligned = cell(num_meshes, 1);
+    for iter = 1:max_iterations
+        % Compute mean shape
+        mean_shape = mean(X, 3);
 
+        % Align each shape to mean
+        total_change = 0;
         for i = 1:num_meshes
-            [aligned{i}.vertices, ~] = procrustes_single(meshes{i}.vertices, mean_shape, allow_scaling);
-            aligned{i}.faces = meshes{i}.faces;
-        end
+            % Center both shapes
+            shape_centered = X(:, :, i) - mean(X(:, :, i), 1);
+            mean_centered = mean_shape - mean(mean_shape, 1);
 
-        % Compute new mean
-        new_mean_shape = zeros(num_vertices, 3);
-        for i = 1:num_meshes
-            new_mean_shape = new_mean_shape + aligned{i}.vertices;
+            % Find rotation matrix using SVD
+            [U, ~, V] = svd(mean_centered' * shape_centered);
+            R = V * U';
+
+            % Ensure proper rotation (det = 1)
+            if det(R) < 0
+                V(:, end) = -V(:, end);
+                R = V * U';
+            end
+
+            % Apply rotation
+            X_new = (R * shape_centered')';
+
+            % Compute change
+            change = norm(X_new - X(:, :, i), 'fro');
+            total_change = total_change + change;
+
+            X(:, :, i) = X_new;
         end
-        new_mean_shape = new_mean_shape / num_meshes;
 
         % Check convergence
-        mean_diff = norm(new_mean_shape(:) - mean_shape(:));
-        if mean_diff < tolerance
-            logger(sprintf('Procrustes converged in %d iterations', iter));
+        if total_change / num_meshes < tolerance
+            logger(sprintf('Procrustes converged after %d iterations', iter), 'level', 'DEBUG');
             break;
         end
-
-        mean_shape = new_mean_shape;
     end
 
-    aligned_meshes = aligned;
-
-end
-
-function [aligned, transform] = procrustes_single(source, target, allow_scaling)
-    % Align source to target using Procrustes analysis
-
-    % Center both shapes
-    centroid_source = mean(source, 1);
-    centroid_target = mean(target, 1);
-
-    source_centered = source - centroid_source;
-    target_centered = target - centroid_target;
-
-    % Compute scale
-    if allow_scaling
-        scale_source = sqrt(sum(source_centered(:).^2) / size(source, 1));
-        scale_target = sqrt(sum(target_centered(:).^2) / size(target, 1));
-        scale = scale_target / scale_source;
-    else
-        scale = 1;
+    % Update meshes
+    for i = 1:num_meshes
+        meshes{i}.vertices = X(:, :, i);
     end
-
-    % Scale source
-    source_scaled = source_centered * scale;
-
-    % Compute rotation (SVD)
-    H = source_scaled' * target_centered;
-    [U, ~, V] = svd(H);
-    R = V * U';
-
-    % Handle reflection
-    if det(R) < 0
-        V(:, 3) = -V(:, 3);
-        R = V * U';
-    end
-
-    % Apply transformation
-    aligned = (R * source_scaled')' + centroid_target;
-
-    % Store transform
-    transform.R = R;
-    transform.t = centroid_target - (R * (scale * centroid_source)')';
-    transform.s = scale;
 
 end

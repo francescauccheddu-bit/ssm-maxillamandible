@@ -334,8 +334,21 @@ function display_config(config)
     fprintf('Registration: rigid=%d iters, nonrigid=%d iters\n', ...
         config.registration.rigid_icp.iterations, config.registration.nonrigid_icp.iterations);
     fprintf('SSM: max_components=%d\n', config.ssm.max_components);
-    fprintf('Analysis: %s\n', config.analysis.run_analysis ? 'enabled' : 'disabled');
-    fprintf('Reconstruction: %s\n', config.clinical.run_reconstruction ? 'enabled' : 'disabled');
+
+    % Analysis status
+    if isfield(config, 'analysis') && isfield(config.analysis, 'run_analysis') && config.analysis.run_analysis
+        fprintf('Analysis: enabled\n');
+    else
+        fprintf('Analysis: disabled\n');
+    end
+
+    % Reconstruction status
+    if isfield(config, 'clinical') && isfield(config.clinical, 'run_reconstruction') && config.clinical.run_reconstruction
+        fprintf('Reconstruction: enabled\n');
+    else
+        fprintf('Reconstruction: disabled\n');
+    end
+
     fprintf('-------------------\n\n');
 end
 

@@ -1,42 +1,31 @@
 function mesh = normalize_mesh(mesh, config)
-% NORMALIZE_MESH Center mesh at origin and optionally scale
+% NORMALIZE_MESH Center and scale mesh to unit sphere
 %
-% Usage:
-%   mesh_normalized = normalize_mesh(mesh, config)
+% Syntax:
+%   mesh = normalize_mesh(mesh, config)
 %
-% Parameters:
-%   mesh - Struct with .vertices (Nx3) and .faces (Mx3)
-%   config - Configuration struct with .preprocessing settings
+% Inputs:
+%   mesh - Struct with .vertices and .faces
+%   config - Configuration struct (optional)
 %
-% Returns:
-%   mesh - Normalized mesh (struct with .vertices and .faces)
+% Outputs:
+%   mesh - Normalized mesh struct
 %
-% Operations:
-%   1. Center mesh at origin (centroid = [0,0,0])
-%   2. Optionally normalize scale (unit bounding box)
+% Example:
+%   mesh = normalize_mesh(mesh, config);
 
-    vertices = mesh.vertices;
+    % Center mesh at origin
+    centroid = mean(mesh.vertices, 1);
+    mesh.vertices = mesh.vertices - centroid;
 
-    % Center mesh
-    if config.preprocessing.center_meshes
-        centroid = mean(vertices, 1);
-        vertices = vertices - centroid;
-    end
-
-    % Normalize scale
-    if config.preprocessing.normalize_scale
-        % Compute bounding box diagonal
-        bbox_min = min(vertices, [], 1);
-        bbox_max = max(vertices, [], 1);
-        bbox_diag = norm(bbox_max - bbox_min);
-
-        % Scale to unit bounding box
-        if bbox_diag > eps
-            vertices = vertices / bbox_diag;
+    % Scale to unit sphere (optional - depends on config)
+    if nargin < 2 || ~isfield(config, 'preprocessing') || ...
+       ~isfield(config.preprocessing, 'normalize_scale') || ...
+       config.preprocessing.normalize_scale
+        max_dist = max(sqrt(sum(mesh.vertices.^2, 2)));
+        if max_dist > 0
+            mesh.vertices = mesh.vertices / max_dist;
         end
     end
-
-    % Return normalized mesh
-    mesh.vertices = vertices;
 
 end
