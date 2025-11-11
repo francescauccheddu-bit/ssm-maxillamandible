@@ -20,12 +20,20 @@ function logger(message, varargin)
         message = char(message);
     end
 
-    % Parse inputs
-    p = inputParser;
-    addParameter(p, 'level', 'INFO');
-    parse(p, varargin{:});
+    % Parse optional level argument
+    level = 'INFO';  % Default
+    if ~isempty(varargin)
+        for i = 1:2:length(varargin)
+            if i <= length(varargin) && ischar(varargin{i})
+                if strcmpi(varargin{i}, 'level') && i+1 <= length(varargin)
+                    level = varargin{i+1};
+                    break;
+                end
+            end
+        end
+    end
 
-    level = upper(p.Results.level);
+    level = upper(level);
 
     % Format timestamp
     timestamp = datestr(now, 'yyyy-mm-dd HH:MM:SS');
