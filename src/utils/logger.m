@@ -20,16 +20,28 @@ function logger(message, varargin)
         message = char(message);
     end
 
-    % Parse optional level argument
+    % Separate format arguments from 'level' parameter
     level = 'INFO';  % Default
-    if ~isempty(varargin)
-        for i = 1:2:length(varargin)
-            if i <= length(varargin) && ischar(varargin{i})
-                if strcmpi(varargin{i}, 'level') && i+1 <= length(varargin)
-                    level = varargin{i+1};
-                    break;
-                end
-            end
+    format_args = {};
+
+    i = 1;
+    while i <= length(varargin)
+        if ischar(varargin{i}) && strcmpi(varargin{i}, 'level') && i+1 <= length(varargin)
+            level = varargin{i+1};
+            i = i + 2;
+        else
+            % It's a format argument
+            format_args{end+1} = varargin{i};
+            i = i + 1;
+        end
+    end
+
+    % Apply sprintf formatting if format arguments exist
+    if ~isempty(format_args)
+        try
+            message = sprintf(message, format_args{:});
+        catch
+            % If sprintf fails, just use the message as-is
         end
     end
 

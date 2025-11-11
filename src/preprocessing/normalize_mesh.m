@@ -18,9 +18,10 @@ function mesh = normalize_mesh(mesh, config)
     centroid = mean(mesh.vertices, 1);
     mesh.vertices = mesh.vertices - centroid;
 
-    % Scale to unit sphere (optional - depends on config)
-    if nargin < 2 || ~isfield(config, 'preprocessing') || ...
-       ~isfield(config.preprocessing, 'normalize_scale') || ...
+    % Scale to unit sphere (DISABLED by default to preserve mm units for remeshing)
+    % Scaling happens later in SSM building if needed
+    if nargin >= 2 && isfield(config, 'preprocessing') && ...
+       isfield(config.preprocessing, 'normalize_scale') && ...
        config.preprocessing.normalize_scale
         max_dist = max(sqrt(sum(mesh.vertices.^2, 2)));
         if max_dist > 0
