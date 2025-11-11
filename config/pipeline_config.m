@@ -27,8 +27,8 @@ function config = pipeline_config()
     config.logging.log_dir = 'output/logs';
     config.logging.level = 'INFO';
 
-    %% Checkpointing
-    config.checkpoint.enabled = false;  % Disabled for now
+    %% Checkpointing (ENABLED to avoid recomputation)
+    config.checkpoint.enabled = true;  % Save results after each phase
     config.checkpoint.dir = 'cache/checkpoints';
     config.checkpoint.phases = {'preprocessing', 'registration', 'ssm_building', 'analysis', 'reconstruction'};
 
@@ -80,6 +80,9 @@ function config = pipeline_config()
     end
     if config.logging.enabled && ~exist(config.logging.log_dir, 'dir')
         mkdir(config.logging.log_dir);
+    end
+    if config.checkpoint.enabled && ~exist(config.checkpoint.dir, 'dir')
+        mkdir(config.checkpoint.dir);
     end
 
 end
