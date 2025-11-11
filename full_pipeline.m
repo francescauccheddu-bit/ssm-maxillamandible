@@ -7,13 +7,13 @@ addpath('ssm-new-modules');
 % Configurazione completa
 config = pipeline_config();
 % Template selection automatica
-config.registration.rigid_iters = 5;      % Iterazioni complete
-config.registration.nonrigid_iters = 50;  % Iterazioni complete
+config.registration.rigid_icp.iterations = 5;      % Iterazioni complete
+config.registration.nonrigid_icp.iterations = 50;  % Iterazioni complete
 
 fprintf('\n=== Full Pipeline ===\n');
 fprintf('Template selection: Automatica\n');
-fprintf('Rigid iterations: %d\n', config.registration.rigid_iters);
-fprintf('Non-rigid iterations: %d\n', config.registration.nonrigid_iters);
+fprintf('Rigid iterations: %d\n', config.registration.rigid_icp.iterations);
+fprintf('Non-rigid iterations: %d\n', config.registration.nonrigid_icp.iterations);
 fprintf('Tempo stimato: 4-6 ore\n\n');
 
 % Esegui la pipeline

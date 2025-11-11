@@ -6,19 +6,21 @@ addpath('ssm-new-modules');
 
 % Configurazione ottimizzata per test
 config = pipeline_config();
-config.registration.template_index = 10;  % Usa il template già identificato
-config.registration.rigid_iters = 2;      % Ridotto a 2 iterazioni
-config.registration.nonrigid_iters = 10;  % Ridotto a 10 iterazioni
+config.registration.template_index = 10;           % Usa il template già identificato
+config.registration.num_iterations = 2;            % Ridotto a 2 cicli completi
+config.registration.rigid_icp.iterations = 50;     % Iterazioni per convergenza
+config.registration.nonrigid_icp.iterations = 10;  % Ridotto a 10 iterazioni interne
 
 fprintf('\n=== Quick Pipeline Test ===\n');
 fprintf('Template index: %d\n', config.registration.template_index);
-fprintf('Rigid iterations: %d\n', config.registration.rigid_iters);
-fprintf('Non-rigid iterations: %d\n', config.registration.nonrigid_iters);
-fprintf('Tempo stimato: 40-50 minuti\n\n');
+fprintf('Registration cycles: %d\n', config.registration.num_iterations);
+fprintf('Rigid ICP max iterations: %d\n', config.registration.rigid_icp.iterations);
+fprintf('Non-rigid ICP iterations: %d\n', config.registration.nonrigid_icp.iterations);
+fprintf('Tempo stimato: 35-40 minuti\n\n');
 
-% Esegui la pipeline
+% Esegui la pipeline (force per ignorare checkpoints)
 try
-    run_pipeline('config', config);
+    run_pipeline('config', config, 'force', true);
     fprintf('\n[OK] Pipeline completata con successo!\n');
 catch ME
     fprintf('\n[ERROR] Errore durante l''esecuzione:\n');
