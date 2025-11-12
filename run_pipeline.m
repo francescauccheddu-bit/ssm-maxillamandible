@@ -282,21 +282,59 @@ function results = phase_registration(config, prev_results)
             nonrigid_opts.lambda = config.registration.nonrigid_icp.lambda;
             nonrigid_opts.use_rigid_prealign = false;  % Already aligned
 
+            expected_num_vertices = size(template_vertices, 1);
+            logger(sprintf('  Template has %d vertices, %d faces', ...
+                expected_num_vertices, size(template_faces, 1)), 'level', 'DEBUG');
+
             for i = 1:length(meshes)
                 if i == template_idx
+                    logger(sprintf('  Specimen %d: template (skipped)', i), 'level', 'DEBUG');
                     continue;
                 end
                 progress_bar(i, length(meshes), 'message', sprintf('Non-rigid ICP iter %d', iter));
 
-                % Deform template to match mesh (not mesh to template)
-                % This ensures all meshes have the same topology (same vertex count)
-                [meshes{i}.vertices, ~] = nonrigid_icp_rbf(...
-                    template_vertices, template_faces, ...
-                    meshes{i}.vertices, meshes{i}.faces, nonrigid_opts);
+                % Store original vertex count for validation
+                orig_vertices = size(meshes{i}.vertices, 1);
 
-                % Update faces to match template topology
-                meshes{i}.faces = template_faces;
+                try
+                    % Deform template to match mesh (not mesh to template)
+                    % This ensures all meshes have the same topology (same vertex count)
+                    [new_vertices, ~] = nonrigid_icp_rbf(...
+                        template_vertices, template_faces, ...
+                        meshes{i}.vertices, meshes{i}.faces, nonrigid_opts);
+
+                    % Validate returned vertex count
+                    if size(new_vertices, 1) ~= expected_num_vertices
+                        error('Specimen %d: nonrigid_icp_rbf returned %d vertices, expected %d', ...
+                            i, size(new_vertices, 1), expected_num_vertices);
+                    end
+
+                    % Update mesh with template topology
+                    meshes{i}.vertices = new_vertices;
+                    meshes{i}.faces = template_faces;
+
+                    logger(sprintf('  Specimen %d: registered (%d -> %d vertices)', ...
+                        i, orig_vertices, size(meshes{i}.vertices, 1)), 'level', 'DEBUG');
+
+                catch ME
+                    logger(sprintf('  ERROR registering specimen %d: %s', i, ME.message), 'level', 'ERROR');
+                    rethrow(ME);
+                end
             end
+
+            % Validate all registered meshes have consistent topology
+            registered_vertices = cellfun(@(m) size(m.vertices, 1), meshes);
+            if length(unique(registered_vertices)) > 1
+                logger('ERROR: Topology inconsistency after non-rigid registration!', 'level', 'ERROR');
+                for i = 1:length(meshes)
+                    logger(sprintf('  Specimen %d: %d vertices', i, size(meshes{i}.vertices, 1)), 'level', 'ERROR');
+                end
+                error('Non-rigid registration failed to establish consistent topology');
+            end
+            logger(sprintf('  All meshes now have consistent topology: %d vertices', registered_vertices(1)), 'level', 'DEBUG');
+        else
+            logger('WARNING: Non-rigid registration is disabled! Meshes will have inconsistent topology.', 'level', 'WARNING');
+            logger('To fix this, set config.registration.use_nonrigid = true', 'level', 'WARNING');
         end
 
         % Update template to mean shape for next iteration
@@ -304,8 +342,41 @@ function results = phase_registration(config, prev_results)
             logger(sprintf('  Updating template for next iteration...', iter), 'level', 'DEBUG');
             % Find specimen closest to preliminary mean
             template_idx = select_template_closest_to_mean(meshes);
+            logger(sprintf('  New template: specimen %d', template_idx), 'level', 'DEBUG');
         end
     end
+
+    % Final check: if non-rigid was disabled, all meshes must already have same topology
+    if ~config.registration.use_nonrigid
+        logger('WARNING: Non-rigid registration was disabled. Checking if meshes already have consistent topology...', 'level', 'WARNING');
+        num_vertices_check = cellfun(@(m) size(m.vertices, 1), meshes);
+        if length(unique(num_vertices_check)) > 1
+            logger('ERROR: Meshes have inconsistent topology and non-rigid registration is disabled!', 'level', 'ERROR');
+            logger(sprintf('Vertex counts range from %d to %d', min(num_vertices_check), max(num_vertices_check)), 'level', 'ERROR');
+            error(['Inconsistent mesh topology detected. Enable non-rigid registration by setting ' ...
+                   'config.registration.use_nonrigid = true, or ensure input meshes have identical topology.']);
+        else
+            logger(sprintf('OK: All meshes have %d vertices', num_vertices_check(1)), 'level', 'DEBUG');
+        end
+    end
+
+    % Validate topology consistency after registration
+    logger('Validating topology consistency...');
+    num_vertices = cellfun(@(m) size(m.vertices, 1), meshes);
+    num_faces = cellfun(@(m) size(m.faces, 1), meshes);
+
+    if length(unique(num_vertices)) > 1
+        logger(sprintf('ERROR: Inconsistent topology detected! Vertex counts: min=%d, max=%d', ...
+            min(num_vertices), max(num_vertices)), 'level', 'ERROR');
+        for i = 1:length(meshes)
+            logger(sprintf('  Specimen %d: %d vertices, %d faces', ...
+                i, size(meshes{i}.vertices, 1), size(meshes{i}.faces, 1)), 'level', 'DEBUG');
+        end
+        error('Registration failed: meshes have inconsistent topology. All meshes must have the same vertex count for SSM.');
+    end
+
+    logger(sprintf('Topology validation passed: all meshes have %d vertices and %d faces', ...
+        num_vertices(1), num_faces(1)), 'level', 'DEBUG');
 
     % Rescale to original size (per paper section 2.4)
     % After affine+nonrigid registration, restore anatomical scale
