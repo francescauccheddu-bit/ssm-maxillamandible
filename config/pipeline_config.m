@@ -45,6 +45,7 @@ function config = pipeline_config()
     config.registration.template_index = [];  % Auto-select (set to number to use specific template)
     config.registration.use_nonrigid = true;  % Enabled per paper
     config.registration.num_iterations = 3;  % 3 iterations per paper
+    config.registration.update_template_each_iteration = true;  % Update template to mean after each iteration (disable for faster testing)
 
     % Rigid ICP (affine registration)
     config.registration.rigid_icp.max_iterations = 100;

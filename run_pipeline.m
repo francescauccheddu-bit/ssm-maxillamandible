@@ -337,12 +337,17 @@ function results = phase_registration(config, prev_results)
             logger('To fix this, set config.registration.use_nonrigid = true', 'level', 'WARNING');
         end
 
-        % Update template to mean shape for next iteration
+        % Update template to mean shape for next iteration (Local Optimization)
         if iter < num_iterations
-            logger(sprintf('  Updating template for next iteration...', iter), 'level', 'DEBUG');
-            % Find specimen closest to preliminary mean
-            template_idx = select_template_closest_to_mean(meshes);
-            logger(sprintf('  New template: specimen %d', template_idx), 'level', 'DEBUG');
+            % Check if template update is enabled
+            if isfield(config.registration, 'update_template_each_iteration') && config.registration.update_template_each_iteration
+                logger(sprintf('  Updating template for next iteration...', iter), 'level', 'DEBUG');
+                % Find specimen closest to preliminary mean
+                template_idx = select_template_closest_to_mean(meshes);
+                logger(sprintf('  New template: specimen %d', template_idx), 'level', 'DEBUG');
+            else
+                logger(sprintf('  Keeping same template (update disabled for faster testing)', iter), 'level', 'DEBUG');
+            end
         end
     end
 
