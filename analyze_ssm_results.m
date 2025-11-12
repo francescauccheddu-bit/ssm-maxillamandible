@@ -20,5 +20,18 @@
 script_dir = fileparts(mfilename('fullpath'));
 addpath(fullfile(script_dir, 'scripts'));
 
-% Run the actual analysis script
-run(fullfile(script_dir, 'scripts', 'analyze_ssm_results.m'));
+% Save current directory and change to project root
+original_dir = pwd;
+cd(script_dir);
+
+try
+    % Run the actual analysis script
+    run(fullfile(script_dir, 'scripts', 'analyze_ssm_results.m'));
+catch ME
+    % Restore directory even if error occurs
+    cd(original_dir);
+    rethrow(ME);
+end
+
+% Restore original directory
+cd(original_dir);
