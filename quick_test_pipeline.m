@@ -2,7 +2,10 @@
 % Tempo stimato: 40-50 minuti
 % Scopo: Verificare che tutto funzioni correttamente
 
-addpath('ssm-new-modules');
+% Add paths (same as run_pipeline.m)
+[script_dir, ~, ~] = fileparts(mfilename('fullpath'));
+addpath(genpath(fullfile(script_dir, 'src')));
+addpath(fullfile(script_dir, 'config'));
 
 % Configurazione ottimizzata per test
 config = pipeline_config();

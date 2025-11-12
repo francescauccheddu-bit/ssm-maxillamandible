@@ -2,7 +2,10 @@
 % Tempo stimato: 4-6 ore
 % Scopo: Produrre risultati di qualità per analisi finale
 
-addpath('ssm-new-modules');
+% Add paths (same as run_pipeline.m)
+[script_dir, ~, ~] = fileparts(mfilename('fullpath'));
+addpath(genpath(fullfile(script_dir, 'src')));
+addpath(fullfile(script_dir, 'config'));
 
 % Configurazione completa
 config = pipeline_config();
