@@ -106,7 +106,7 @@ config.clinical.num_pcs = 5;                      % PCs for reconstruction
 
 - **SSM Model**: `data/output/models/ssm_model.mat`
 - **Logs**: `data/output/logs/*.txt`
-- **Checkpoints**: `data/cache/checkpoints/*.mat`
+- **Checkpoints**: `data/output/checkpoints/*.mat`
 
 ---
 

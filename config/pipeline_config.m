@@ -15,7 +15,7 @@ function config = pipeline_config()
     % Output paths
     config.paths.output.base = 'data/output';
     config.paths.output.ssm_model = 'data/output/models/ssm_model.mat';
-    config.paths.cache = 'data/cache';
+    config.paths.cache = 'cache';
 
     %% Execution control
     config.execution.force_recompute = false;
@@ -29,7 +29,7 @@ function config = pipeline_config()
 
     %% Checkpointing (ENABLED to avoid recomputation)
     config.checkpoint.enabled = true;  % Save results after each phase
-    config.checkpoint.dir = 'data/cache/checkpoints';
+    config.checkpoint.dir = 'data/output/checkpoints';
     config.checkpoint.phases = {'preprocessing', 'registration', 'ssm_building', 'analysis', 'reconstruction'};
 
     %% Preprocessing

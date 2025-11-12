@@ -5,8 +5,7 @@
 *.mat
 *.slx.autosave
 
-# Cache directory
-data/cache/
+# Cache directory (temporary files)
 cache/
 
 # Data files (large STL files, outputs)
