@@ -15,9 +15,14 @@
 %   >> analyze_ssm_results
 
 %% CONFIGURATION
-ssm_model_path = 'data/output/models/ssm_model.mat';
-variance_output_dir = 'data/output/variance_analysis';
-stl_output_dir = 'data/output/pc_morphology';
+% Get the project root directory (parent of scripts/)
+script_dir = fileparts(mfilename('fullpath'));
+project_root = fileparts(script_dir);
+
+% Use absolute paths relative to project root
+ssm_model_path = fullfile(project_root, 'data', 'output', 'models', 'ssm_model.mat');
+variance_output_dir = fullfile(project_root, 'data', 'output', 'variance_analysis');
+stl_output_dir = fullfile(project_root, 'data', 'output', 'pc_morphology');
 
 % PCs to generate (default: first 3)
 pcs_to_generate = [1, 2, 3];
