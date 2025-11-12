@@ -110,6 +110,23 @@ config.clinical.num_pcs = 5;                      % PCs for reconstruction
 
 ---
 
+## 🔬 Post-Pipeline Analysis
+
+After running the pipeline, analyze your SSM results:
+
+```matlab
+% Complete analysis (variance distribution + PC morphology STLs)
+analyze_ssm_results
+
+% This generates:
+% - output/variance_analysis/       : Variance plots and statistics
+% - output/pc_morphology/            : STL files for PC1-3 at ±3SD
+```
+
+See `scripts/README_SSM_ANALYSIS.md` for advanced analysis options.
+
+---
+
 ## 📖 Usage Examples
 
 ```matlab

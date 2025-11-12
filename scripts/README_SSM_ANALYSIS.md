@@ -8,9 +8,11 @@ Scripts per analizzare i risultati del modello SSM (Statistical Shape Model).
 **Script principale** che esegue l'analisi completa in un unico comando.
 
 ```matlab
-% Esegue tutto in automatico
+% Esegue tutto in automatico (dalla root del progetto)
 analyze_ssm_results
 ```
+
+**Nota**: Ora è possibile eseguire `analyze_ssm_results` direttamente dalla root del progetto grazie al wrapper che aggiunge automaticamente la cartella `scripts/` al path MATLAB.
 
 Questo script:
 - Visualizza la distribuzione della varianza tra i componenti principali
