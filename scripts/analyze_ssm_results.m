@@ -15,9 +15,9 @@
 %   >> analyze_ssm_results
 
 %% CONFIGURATION
-ssm_model_path = 'output/ssm_model.mat';
-variance_output_dir = 'output/variance_analysis';
-stl_output_dir = 'output/pc_morphology';
+ssm_model_path = 'data/output/models/ssm_model.mat';
+variance_output_dir = 'data/output/variance_analysis';
+stl_output_dir = 'data/output/pc_morphology';
 
 % PCs to generate (default: first 3)
 pcs_to_generate = [1, 2, 3];

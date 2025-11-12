@@ -24,16 +24,16 @@ Analizza la distribuzione della varianza tra i componenti principali.
 
 ```matlab
 % Con parametri default
-visualize_variance_distribution('output/ssm_model.mat')
+visualize_variance_distribution('data/output/models/ssm_model.mat')
 
 % Solo visualizzare
 visualize_variance_distribution()
 ```
 
 **Output:**
-- `output/variance_analysis/variance_distribution.png` - Grafici
-- `output/variance_analysis/variance_distribution.fig` - Figure MATLAB
-- `output/variance_analysis/variance_summary.txt` - Statistiche testuali
+- `data/output/variance_analysis/variance_distribution.png` - Grafici
+- `data/output/variance_analysis/variance_distribution.fig` - Figure MATLAB
+- `data/output/variance_analysis/variance_summary.txt` - Statistiche testuali
 
 **Grafici generati:**
 1. Varianza spiegata per ogni PC (bar plot)
@@ -46,18 +46,18 @@ Genera file STL per visualizzare l'impatto morfologico dei PC.
 
 ```matlab
 % Con parametri default (PC1-3, ±3SD)
-generate_pc_morphology_stls('output/ssm_model.mat', 'output/pc_morphology', [1,2,3], 3)
+generate_pc_morphology_stls('data/output/models/ssm_model.mat', 'data/output/pc_morphology', [1,2,3], 3)
 
 % Solo PC1 a ±2SD
-generate_pc_morphology_stls('output/ssm_model.mat', 'output/pc_morphology', 1, 2)
+generate_pc_morphology_stls('data/output/models/ssm_model.mat', 'data/output/pc_morphology', 1, 2)
 
 % Primi 5 PC a ±3SD
-generate_pc_morphology_stls('output/ssm_model.mat', 'output/pc_morphology', [1:5], 3)
+generate_pc_morphology_stls('data/output/models/ssm_model.mat', 'data/output/pc_morphology', [1:5], 3)
 ```
 
 **Parametri:**
-- `ssm_model_path`: Percorso al file SSM (default: `'output/ssm_model.mat'`)
-- `output_dir`: Directory output (default: `'output/pc_morphology'`)
+- `ssm_model_path`: Percorso al file SSM (default: `'data/output/models/ssm_model.mat'`)
+- `output_dir`: Directory output (default: `'data/output/pc_morphology'`)
 - `pcs_to_generate`: Array dei PC da generare (default: `[1,2,3]`)
 - `std_multiplier`: Moltiplicatore SD (default: `3`)
 
@@ -90,7 +90,7 @@ open output/variance_analysis/variance_distribution.png
 visualize_variance_distribution()
 
 % Genera STL solo per PC1 e PC2 a ±2SD
-generate_pc_morphology_stls('output/ssm_model.mat', 'output/pc_morphology', [1,2], 2)
+generate_pc_morphology_stls('data/output/models/ssm_model.mat', 'data/output/pc_morphology', [1,2], 2)
 ```
 
 ## Interpretazione dei Risultati
@@ -127,7 +127,7 @@ run_pipeline
 ### Error: "PC# exceeds available components"
 Soluzione: Verifica quanti componenti ha il tuo modello e riduci il parametro `pcs_to_generate`
 ```matlab
-load('output/ssm_model.mat', 'ssm_model');
+load('data/output/models/ssm_model.mat', 'ssm_model');
 fprintf('Available components: %d\n', ssm_model.num_components);
 ```
 
@@ -141,8 +141,9 @@ Soluzione: Gli STL sono in formato ASCII. Se il tuo viewer richiede formato bina
 
 ## Output Directory Structure
 ```
-output/
-├── ssm_model.mat                          # Input (generato dalla pipeline)
+data/output/
+├── models/
+│   └── ssm_model.mat                      # Input (generato dalla pipeline)
 ├── variance_analysis/                     # Output analisi varianza
 │   ├── variance_distribution.png
 │   ├── variance_distribution.fig

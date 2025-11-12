@@ -13,9 +13,9 @@ function config = pipeline_config()
     config.paths.input.clinical = '';  % No clinical cases
 
     % Output paths
-    config.paths.output.base = 'output';
-    config.paths.output.ssm_model = 'output/ssm_model.mat';
-    config.paths.cache = 'cache';
+    config.paths.output.base = 'data/output';
+    config.paths.output.ssm_model = 'data/output/models/ssm_model.mat';
+    config.paths.cache = 'data/cache';
 
     %% Execution control
     config.execution.force_recompute = false;
@@ -24,12 +24,12 @@ function config = pipeline_config()
 
     %% Logging
     config.logging.enabled = true;
-    config.logging.log_dir = 'output/logs';
+    config.logging.log_dir = 'data/output/logs';
     config.logging.level = 'INFO';
 
     %% Checkpointing (ENABLED to avoid recomputation)
     config.checkpoint.enabled = true;  % Save results after each phase
-    config.checkpoint.dir = 'cache/checkpoints';
+    config.checkpoint.dir = 'data/cache/checkpoints';
     config.checkpoint.phases = {'preprocessing', 'registration', 'ssm_building', 'analysis', 'reconstruction'};
 
     %% Preprocessing

@@ -5,6 +5,10 @@
 *.mat
 *.slx.autosave
 
+# Cache directory
+data/cache/
+cache/
+
 # Data files (large STL files, outputs)
 data/input/female/*.stl
 data/input/male/*.stl
